@@ -170,51 +170,173 @@ function CustomUILib:AddDropdown(parent, items, callback)
                 itemButton.Size = UDim2.new(1, 0, 0, 50)
                 itemButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
                                 itemButton.TextColor3 = Color3.new(1, 1, 1)
-                itemButton.Parent = parent
-                itemButton.MouseButton1Click:Connect(function()
-                    currentItem = item
-                    dropdown.Text = "Selecionar: " .. currentItem
-                    print("Item selecionado:", currentItem)
-                    callback(currentItem)
-                end)
-            end
+
+--// CustomUILib //--
+
+local CustomUILib = {}
+
+-- Mensagem de inicialização
+print("CustomUILib inicializada com sucesso!")
+
+-- Função para criar a janela principal
+function CustomUILib:CreateWindow(config)
+    local ScreenGui = Instance.new("ScreenGui")
+    local MainFrame = Instance.new("Frame")
+    local TitleBar = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local CloseButton = Instance.new("TextButton")
+    
+    -- Estilo do MainFrame (moderno, com bordas arredondadas e transparência)
+    MainFrame.Size = UDim2.new(0, 500, 0, 350)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Parent = ScreenGui
+    MainFrame.ClipsDescendants = true
+
+    -- Adiciona bordas arredondadas
+    local UICorner = Instance.new("UICorner", MainFrame)
+    UICorner.CornerRadius = UDim.new(0, 12)
+
+    -- Título da Janela
+    TitleBar.Size = UDim2.new(1, 0, 0, 40)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    TitleBar.Parent = MainFrame
+
+    Title.Text = config.Name or "Custom UI"
+    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextScaled = true
+    Title.Parent = TitleBar
+
+    -- Botão de Fechar
+    CloseButton.Text = "X"
+    CloseButton.Size = UDim2.new(0, 40, 1, 0)
+    CloseButton.Position = UDim2.new(1, -40, 0, 0)
+    CloseButton.TextColor3 = Color3.new(1, 1, 1)
+    CloseButton.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+    CloseButton.Parent = TitleBar
+
+    CloseButton.MouseButton1Click:Connect(function()
+        -- Fechar janela com confirmação
+        if MainFrame.Visible then
+            MainFrame.Visible = false
         else
-            for _, child in ipairs(parent:GetChildren()) do
-                if child:IsA("TextButton") and child ~= dropdown then
-                    child:Destroy()
-                end
-            end
+            MainFrame.Visible = true
         end
     end)
-    return dropdown
-end
 
-function CustomUILib:AddParagraph(parent, text)
-    local paragraph = Instance.new("TextLabel")
-    paragraph.Text = text
-    paragraph.Size = UDim2.new(1, 0, 0, 50)
-    paragraph.BackgroundTransparency = 1
-    paragraph.TextColor3 = Color3.new(1, 1, 1)
-    paragraph.TextScaled = true
-    paragraph.Parent = parent
-    return paragraph
-end
+    -- Função para criar uma aba
+    function CustomUILib:MakeTab(tabConfig)
+        local TabFrame = Instance.new("Frame")
+        local TabButton = Instance.new("TextButton")
+        
+        -- Estilo do TabFrame
+        TabFrame.Size = UDim2.new(1, 0, 1, 0)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.Visible = false
+        TabFrame.Parent = MainFrame
 
-function CustomUILib:AddNotification(parent, message, duration)
-    local notification = Instance.new("TextLabel")
-    notification.Text = message
-    notification.Size = UDim2.new(1, 0, 0, 50)
-    notification.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    notification.TextColor3 = Color3.new(1, 1, 1)
-    notification.TextScaled = true
-    notification.Parent = parent
+        -- Estilo do botão da aba
+        TabButton.Text = tabConfig.Name or "Aba"
+        TabButton.Size = UDim2.new(0, 100, 0, 30)
+        TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        TabButton.TextColor3 = Color3.new(1, 1, 1)
+        TabButton.Parent = TitleBar
+        TabButton.Position = UDim2.new(0, 100 * #MainFrame:GetChildren(), 0, 0)
 
-    task.delay(duration or 3, function()
-        notification:Destroy()
-        print("Notificação removida:", message)
-    end)
+        TabButton.MouseButton1Click:Connect(function()
+            -- Mostrar a aba selecionada e esconder as outras
+            for _, v in pairs(MainFrame:GetChildren()) do
+                if v:IsA("Frame") and v ~= TabFrame then
+                    v.Visible = false
+                end
+            end
+            TabFrame.Visible = true
+        end)
 
-    return notification
+        -- Função para adicionar botões
+        function TabFrame:AddButton(buttonConfig)
+            local Button = Instance.new("TextButton")
+            Button.Text = buttonConfig.Name or "Button"
+            Button.Size = UDim2.new(0, 200, 0, 40)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Button.TextColor3 = Color3.new(1, 1, 1)
+            Button.Parent = TabFrame
+
+            Button.MouseButton1Click:Connect(function()
+                print("Botão clicado:", Button.Text)
+                buttonConfig.Callback()
+            end)
+        end
+
+        -- Função para adicionar toggles
+        function TabFrame:AddToggle(toggleConfig)
+            local Toggle = Instance.new("TextButton")
+            local State = toggleConfig.Default or false
+            Toggle.Text = toggleConfig.Name .. ": " .. tostring(State)
+            Toggle.Size = UDim2.new(0, 200, 0, 40)
+            Toggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Toggle.TextColor3 = Color3.new(1, 1, 1)
+            Toggle.Parent = TabFrame
+
+            Toggle.MouseButton1Click:Connect(function()
+                State = not State
+                Toggle.Text = toggleConfig.Name .. ": " .. tostring(State)
+                print("Toggle alterado:", State)
+                toggleConfig.Callback(State)
+            end)
+        end
+
+        -- Função para adicionar picker de cores
+        function TabFrame:AddColorPicker(colorConfig)
+            local ColorPicker = Instance.new("TextButton")
+            local Color = colorConfig.Default or Color3.fromRGB(255, 255, 255)
+            ColorPicker.Text = colorConfig.Name
+            ColorPicker.BackgroundColor3 = Color
+            ColorPicker.Size = UDim2.new(0, 200, 0, 40)
+            ColorPicker.Parent = TabFrame
+
+            ColorPicker.MouseButton1Click:Connect(function()
+                Color = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
+                ColorPicker.BackgroundColor3 = Color
+                print("Cor selecionada:", Color)
+                colorConfig.Callback(Color)
+            end)
+        end
+
+        return TabFrame
+    end
+
+    -- Função para notificações
+    function CustomUILib:Notify(notificationConfig)
+        local Notification = Instance.new("TextLabel")
+        Notification.Text = notificationConfig.Title .. ": " .. notificationConfig.Content
+        Notification.Size = UDim2.new(0, 300, 0, 50)
+        Notification.Position = UDim2.new(0.5, -150, 0, 0)
+        Notification.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        Notification.TextColor3 = Color3.new(1, 1, 1)
+        Notification.TextScaled = true
+        Notification.Parent = ScreenGui
+
+                task.delay(notificationConfig.Duration or 3, function()
+            Notification:Destroy()
+            print("Notificação removida:", notificationConfig.Title)
+        end)
+    end
+
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    return {
+        MakeTab = function(self, tabConfig)
+            return CustomUILib:MakeTab(tabConfig)
+        end,
+        Notify = function(self, notificationConfig)
+            return CustomUILib:Notify(notificationConfig)
+        end
+    }
 end
 
 return CustomUILib
+            
