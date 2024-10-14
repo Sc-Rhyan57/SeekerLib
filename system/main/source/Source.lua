@@ -422,20 +422,7 @@ function Lib:CreateNotification(notifConfig)
     end)
 end
 
--- Add the GitHub Request functionality
-function Lib:HttpGet(url)
-    local response
-    local success, err = pcall(function()
-        response = HttpService:GetAsync(url)
-    end)
 
-    if success then
-        local libFunc = loadstring(response)
-        return libFunc and libFunc() or nil
-    else
-        warn("Failed to get script from URL: ", err)
-    end
-end
 
 
       
